@@ -369,7 +369,7 @@ contract V3UtilsIntegrationTest is IntegrationTestBase {
         // decrease liquidity without collect (simulate fee growth)
         vm.prank(TEST_NFT_ACCOUNT);
         (uint256 amount0, uint256 amount1) = NPM.decreaseLiquidity(
-            univ3.INonfungiblePositionManager.DecreaseLiquidityParams(
+            IUniV3NonfungiblePositionManager.DecreaseLiquidityParams(
                 TEST_NFT,
                 liquidity,
                 0,

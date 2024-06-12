@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "v3-periphery/interfaces/external/IWETH9.sol";
-import "v3-periphery/interfaces/INonfungiblePositionManager.sol" as univ3;
+import { INonfungiblePositionManager as IUniV3NonfungiblePositionManager } from "v3-periphery/interfaces/INonfungiblePositionManager.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "v3-core/libraries/FullMath.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
@@ -10,7 +10,7 @@ import '@openzeppelin/contracts/utils/structs/EnumerableSet.sol';
 
 import "./Pausable.sol";
 
-interface INonfungiblePositionManager is univ3.INonfungiblePositionManager {
+interface INonfungiblePositionManager is IUniV3NonfungiblePositionManager {
     /// @notice mintParams for algebra v1
     struct AlgebraV1MintParams {
         address token0;
@@ -361,7 +361,7 @@ abstract contract Common is AccessControl, Pausable {
         
         if (params.protocol == Protocol.UNI_V3) {
             // mint is done to address(this) because it is not a safemint and safeTransferFrom needs to be done manually afterwards
-            (result.tokenId,result.liquidity,result.added0,result.added1) = _mintUniv3(params.nfpm, univ3.INonfungiblePositionManager.MintParams(
+            (result.tokenId,result.liquidity,result.added0,result.added1) = _mintUniv3(params.nfpm, IUniV3NonfungiblePositionManager.MintParams(
                 address(params.token0),
                 address(params.token1),
                 params.fee,
@@ -376,7 +376,7 @@ abstract contract Common is AccessControl, Pausable {
             ));
         } else if (params.protocol == Protocol.ALGEBRA_V1) {
             // mint is done to address(this) because it is not a safemint and safeTransferFrom needs to be done manually afterwards
-            (result.tokenId,result.liquidity,result.added0,result.added1) = _mintAlgebraV1(params.nfpm, univ3.INonfungiblePositionManager.MintParams(
+            (result.tokenId,result.liquidity,result.added0,result.added1) = _mintAlgebraV1(params.nfpm, IUniV3NonfungiblePositionManager.MintParams(
                 address(params.token0),
                 address(params.token1),
                 params.fee,
@@ -444,7 +444,7 @@ abstract contract Common is AccessControl, Pausable {
         (uint256 total0, uint256 total1) = _swapAndPrepareAmounts(
             SwapAndMintParams(params.protocol, params.nfpm, token0, token1, 0, 0, 0, 0, params.amount0, params.amount1, 0, params.recipient, params.deadline, params.swapSourceToken, params.amountIn0, params.amountOut0Min, params.swapData0, params.amountIn1, params.amountOut1Min, params.swapData1, params.amountAddMin0, params.amountAddMin1), unwrap);
         INonfungiblePositionManager.IncreaseLiquidityParams memory increaseLiquidityParams = 
-            univ3.INonfungiblePositionManager.IncreaseLiquidityParams(
+            IUniV3NonfungiblePositionManager.IncreaseLiquidityParams(
                 params.tokenId, 
                 total0, 
                 total1, 
@@ -570,7 +570,7 @@ abstract contract Common is AccessControl, Pausable {
     function _decreaseLiquidity(INonfungiblePositionManager nfpm, uint256 tokenId, uint128 liquidity, uint256 deadline, uint256 token0Min, uint256 token1Min) internal returns (uint256 amount0, uint256 amount1) {
         if (liquidity != 0) {
             (amount0, amount1) = nfpm.decreaseLiquidity(
-                univ3.INonfungiblePositionManager.DecreaseLiquidityParams(
+                IUniV3NonfungiblePositionManager.DecreaseLiquidityParams(
                     tokenId, 
                     liquidity, 
                     token0Min, 
@@ -586,7 +586,7 @@ abstract contract Common is AccessControl, Pausable {
         uint256 balanceBefore0 = token0.balanceOf(address(this));
         uint256 balanceBefore1 = token1.balanceOf(address(this));
         (amount0, amount1) = nfpm.collect(
-            univ3.INonfungiblePositionManager.CollectParams(tokenId, address(this), collectAmount0, collectAmount1)
+            IUniV3NonfungiblePositionManager.CollectParams(tokenId, address(this), collectAmount0, collectAmount1)
         );
         uint256 balanceAfter0 = token0.balanceOf(address(this));
         uint256 balanceAfter1 = token1.balanceOf(address(this));
@@ -603,7 +603,7 @@ abstract contract Common is AccessControl, Pausable {
     function _decreaseLiquidityAndCollectFees(DecreaseAndCollectFeesParams memory params) internal returns (uint256 amount0, uint256 amount1) {
         (uint256 positionAmount0, uint256 positionAmount1) = _decreaseLiquidity(params.nfpm, params.tokenId, params.liquidity, params.deadline, params.token0Min, params.token1Min);
         (amount0, amount1) = params.nfpm.collect(
-            univ3.INonfungiblePositionManager.CollectParams(
+            IUniV3NonfungiblePositionManager.CollectParams(
                 params.tokenId,
                 address(this),
                 type(uint128).max,
